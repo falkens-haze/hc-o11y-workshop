@@ -12,13 +12,6 @@ services:
       - "4317:4317"   # OTLP gRPC (receives from telemetrygen)
       - "55679:55679" # zpages debug UI — http://localhost:55679/debug/tracez
 
-  # Three trace generators simulate a small distributed system.
-  # Different rates demonstrate the cost narrative ("frontend is high-volume,
-  # payment is low-volume / high-value"). Resource attributes shape the
-  # service identity in Honeycomb's service map; telemetry attributes give
-  # attendees real attributes to filter and group by during the demo.
-  # NOTE: telemetrygen produces single-process traces — these services don't
-  # form a true call graph. Good enough for visual variety in Honeycomb.
 
   telemetrygen-traces-frontend:
     image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest
@@ -85,22 +78,6 @@ services:
       - --telemetry-attributes=card.type="visa"
       - --telemetry-attributes=transaction.currency="USD"
       - --telemetry-attributes=region="us-east-1"
-
-  # Real Prometheus metrics source for the workshop.
-  # Exposes ~100 metrics on :9100 in native Prometheus format.
-  # The OTel Collector's `prometheus` receiver scrapes this — see otel-config.yaml.
-  # Reports on its own container/VM, not the laptop host — that's intentional
-  # for cross-platform Docker Desktop compatibility (macOS/Windows can't bind-mount
-  # the host root with the propagation flags Linux node-exporter expects).
-  node-exporter:
-    image: prom/node-exporter:v1.8.2
-    container_name: node-exporter
-
-  # Two log generators emit a realistic mix of INFO and ERROR events.
-  # Different rates create a roughly 10:1 INFO:ERROR ratio — common in production
-  # and useful for severity-based filter/sampling demos in Cribl.
-  # The two streams interleave naturally as they ship to the OTel collector,
-  # so the combined output to Loki looks like a single varied log stream.
 
   telemetrygen-logs-info:
     image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest
