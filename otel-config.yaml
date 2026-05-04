@@ -1,0 +1,59 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+  # Scrapes node-exporter for real, Prometheus-format host metrics.
+  # See docker-compose.yml for the node-exporter service.
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: node-exporter
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['node-exporter:9100']
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 100
+  resource:
+    attributes:
+      - key: workshop.source
+        value: "telemetrygen-laptop"
+        action: insert
+
+exporters:
+  otlp/cribl:
+    endpoint: ${env:CRIBL_ENDPOINT}
+    tls:
+      insecure:             false
+      insecure_skip_verify: false
+    # No Authorization header — matches your current Alloy exporter config.
+    # If Cribl OTLP source auth is later enabled, add:
+    #   headers:
+    #     Authorization: "Bearer ${env:CRIBL_AUTH_TOKEN}"
+
+  debug:
+    verbosity: detailed
+
+extensions:
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [zpages]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [otlp/cribl, debug]
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [resource, batch]
+      exporters: [otlp/cribl, debug]
+    logs:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [otlp/cribl, debug]
