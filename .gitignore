@@ -6,3 +6,5 @@
 .idea/
 .vscode/
 slides/
+*.md
+!README.md
