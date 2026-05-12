@@ -1,0 +1,29 @@
+# vendor: observability backend / cloud-native logging service
+# signal: traces | logs | metrics
+# unit: the unit of cost measurement (per_million_events for traces/logs, per_million_datapoints for metrics)
+# cost_per_unit_usd: list price in USD per one unit
+# pricing_basis: brief note on how the vendor actually bills (their native pricing unit)
+# assumed_event_size_kb: assumption used to normalize GB-based pricing to per-million-events (only relevant where the vendor prices per-GB)
+#
+# All numbers are list-price approximations from publicly available pricing pages.
+# Real costs differ with commitment tiers, region, retention periods, and discounts.
+# Intended for workshop / illustrative cost modeling, not procurement decisions.
+vendor,signal,unit,cost_per_unit_usd,pricing_basis,assumed_event_size_kb
+aws,traces,per_million_events,5.00,AWS X-Ray $5 per million traces recorded,0
+aws,logs,per_million_events,2.50,CloudWatch Logs $0.50/GB ingested,5
+aws,metrics,per_million_datapoints,3.00,CloudWatch custom metrics $0.30/metric/mo at ~100K datapoints/series,0
+azure,traces,per_million_events,11.50,Application Insights $2.30/GB ingested PAYG,5
+azure,logs,per_million_events,11.50,Azure Monitor Logs $2.30/GB ingested PAYG,5
+azure,metrics,per_million_datapoints,0.26,Azure Monitor Metrics API $0.258/M calls,0
+gcp,traces,per_million_events,0.20,Cloud Trace $0.20/M spans after 2.5M/mo free,0
+gcp,logs,per_million_events,2.50,Cloud Logging $0.50/GiB ingested after 50GiB/mo free,5
+gcp,metrics,per_million_datapoints,1.51,Cloud Monitoring $0.151/MiB chargeable metric data,0
+datadog,traces,per_million_events,1.70,Datadog Indexed Spans 15-day retention,0
+datadog,logs,per_million_events,0.50,Datadog log ingestion $0.10/GB,5
+datadog,metrics,per_million_datapoints,0.50,Datadog custom metrics $0.05/metric/mo at ~100K datapoints/series,0
+dynatrace,traces,per_million_events,3.00,Approximated from DDU consumption at $0.001/DDU,0
+dynatrace,logs,per_million_events,1.00,DDU-based; ~$0.20/GB equivalent at typical compression,5
+dynatrace,metrics,per_million_datapoints,1.00,Approximated from DDU consumption,0
+honeycomb,traces,per_million_events,1.00,Honeycomb Pro per-event pricing post-included tier,0
+honeycomb,logs,per_million_events,1.00,Honeycomb Pro per-event pricing post-included tier,0
+honeycomb,metrics,per_million_datapoints,1.00,Honeycomb Metrics per-event pricing post-included tier,0

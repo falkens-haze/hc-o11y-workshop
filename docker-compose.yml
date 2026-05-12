@@ -114,3 +114,23 @@ services:
       - --severity-text=ERROR
       - --severity-number=17
       - --body=bad message
+
+  # Synthetic LLM telemetry generator. Emits OTel GenAI-shaped spans with
+  # realistic prompt/completion bodies, token counts, per-call cost, model
+  # mix, and a small percentage of errors and slow-tail latencies.
+  # Powers the workshop's AI-observability demos: PII masking on prompts,
+  # cost-per-route aggregation, prompt/completion archival to Lake, and
+  # outcome-aware tail sampling.
+  # Source in ./genaitelgen/ — see main.py for the full attribute schema.
+  genaitelgen:
+    build: ./genaitelgen
+    container_name: genaitelgen
+    depends_on:
+      - otel-collector
+    restart: on-failure
+    environment:
+      OTLP_ENDPOINT: otel-collector:4317
+      SERVICE_NAME: workshop-ai-assistant
+      SERVICE_VERSION: 1.0.0
+      DEPLOYMENT_ENV: production
+      RATE_PER_SEC: "2"

@@ -13,14 +13,51 @@ receivers:
             - targets: ['node-exporter:9100']
 
 processors:
+  # Best practice: place first in every pipeline. Caps the collector's memory
+  # use so a runaway source can't OOM the container.
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+
   batch:
     timeout: 5s
     send_batch_size: 100
+
   resource:
     attributes:
       - key: workshop.source
         value: "telemetrygen-laptop"
         action: insert
+
+  # ----------------------------------------------------------------------
+  # OPTIONAL: Tail-based sampling. Disabled by default in this workshop
+  # because telemetrygen produces identical traces (no errors, no latency
+  # variation), so the policies below would have no visible effect locally.
+  # See the workshop's EKS Honeycomb dataset for tail sampling on real data.
+  #
+  # To enable: uncomment this block AND add `tail_sampling` to the traces
+  # pipeline's `processors:` list below (after `resource`, before `batch`).
+  # ----------------------------------------------------------------------
+  # tail_sampling:
+  #   decision_wait: 10s
+  #   num_traces: 50000
+  #   expected_new_traces_per_sec: 200
+  #   policies:
+  #     - name: keep-errors
+  #       type: status_code
+  #       status_code: { status_codes: [ERROR] }
+  #     - name: keep-slow
+  #       type: latency
+  #       latency: { threshold_ms: 500 }
+  #     - name: keep-vip-customers
+  #       type: string_attribute
+  #       string_attribute:
+  #         key: customer.tier
+  #         values: [premium]
+  #     - name: sample-the-rest
+  #       type: probabilistic
+  #       probabilistic: { sampling_percentage: 5 }
 
 exporters:
   otlp/cribl:
@@ -43,13 +80,13 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [resource, batch]
+      processors: [memory_limiter, resource, batch]
       exporters: [otlp/cribl, debug]
     metrics:
       receivers: [otlp, prometheus]
-      processors: [resource, batch]
+      processors: [memory_limiter, resource, batch]
       exporters: [otlp/cribl, debug]
     logs:
       receivers: [otlp]
-      processors: [resource, batch]
+      processors: [memory_limiter, resource, batch]
       exporters: [otlp/cribl, debug]
