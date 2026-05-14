@@ -1,23 +1,35 @@
 services:
 
-  # ── OTel Collector ───────────────────────────────────────────────────────────
-  # Receives all signals from generators and forwards to Cribl Stream.
-  # zpages debug UI: http://localhost:55679/debug/tracez
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    ports:
+      - "9100:9100"
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
+    depends_on:
+      - node-exporter
     command: ["--config=/etc/otel/config.yaml"]
     environment:
       - CRIBL_ENDPOINT=${CRIBL_ENDPOINT}
     volumes:
       - ./otel-config.yaml:/etc/otel/config.yaml
     ports:
-      - "4317:4317"   # OTLP gRPC (receives from all generators)
-      - "55679:55679" # zpages debug UI
+      - "4317:4317"
+      - "55679:55679"
 
-
-  # ── Traces ───────────────────────────────────────────────────────────────────
 
   telemetrygen-traces-frontend:
     image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest
@@ -86,13 +98,6 @@ services:
       - --telemetry-attributes=region="us-east-1"
 
 
-  # ── Logs ─────────────────────────────────────────────────────────────────────
-  # Replaces the basic telemetrygen-logs-info / telemetrygen-logs-error services.
-  # Generates realistic multi-scenario logs including PII (phone numbers, card
-  # numbers in bodies) for the PII redaction exercise, LLM operation logs,
-  # HTTP access logs, payment events, and session lifecycle events.
-  # Source in ./workshop-log-gen/ — see generate.py for the full scenario schema.
-
   workshop-logs:
     build: ./workshop-log-gen
     container_name: workshop-log-gen
@@ -100,24 +105,10 @@ services:
       - otel-collector
     restart: on-failure
     environment:
-      # Send to the local OTel collector — it forwards to Cribl
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
-      # No TLS on the local collector-to-generator path
       OTEL_INSECURE: "true"
-      # Events per second across all scenario types
       LOG_RATE_EPS: "3"
-      # Uncomment to pin to a single service name:
-      # SERVICE_NAME: workshop-ai-assistant
 
-
-  # ── GenAI / LLM Traces ───────────────────────────────────────────────────────
-  # Synthetic LLM telemetry generator. Emits OTel GenAI-shaped spans with
-  # realistic prompt/completion bodies, token counts, per-call cost, model
-  # mix, and a small percentage of errors and slow-tail latencies.
-  # Powers the workshop's AI-observability demos: PII masking on prompts,
-  # cost-per-route aggregation, prompt/completion archival to Lake, and
-  # outcome-aware tail sampling.
-  # Source in ./genaitelgen/ — see main.py for the full attribute schema.
 
   genaitelgen:
     build: ./genaitelgen

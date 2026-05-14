@@ -3,7 +3,6 @@ receivers:
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
-
   prometheus:
     config:
       scrape_configs:
@@ -13,32 +12,18 @@ receivers:
             - targets: ['node-exporter:9100']
 
 processors:
-  # Best practice: place first in every pipeline. Caps the collector's memory
-  # use so a runaway source can't OOM the container.
   memory_limiter:
     check_interval: 1s
     limit_percentage: 80
     spike_limit_percentage: 25
-
   batch:
     timeout: 5s
     send_batch_size: 100
-
   resource:
     attributes:
       - key: workshop.source
         value: "telemetrygen-laptop"
         action: insert
-
-  # ----------------------------------------------------------------------
-  # OPTIONAL: Tail-based sampling. Disabled by default in this workshop
-  # because telemetrygen produces identical traces (no errors, no latency
-  # variation), so the policies below would have no visible effect locally.
-  # See the workshop's EKS Honeycomb dataset for tail sampling on real data.
-  #
-  # To enable: uncomment this block AND add `tail_sampling` to the traces
-  # pipeline's `processors:` list below (after `resource`, before `batch`).
-  # ----------------------------------------------------------------------
   # tail_sampling:
   #   decision_wait: 10s
   #   num_traces: 50000
@@ -58,6 +43,13 @@ processors:
   #     - name: sample-the-rest
   #       type: probabilistic
   #       probabilistic: { sampling_percentage: 5 }
+  filter/drop_docker_runtime_metrics:
+    error_mode: ignore
+    metrics:
+      metric:
+        - IsMatch(name, "^container\\..*")
+        - IsMatch(name, "^engine\\..*")
+        - IsMatch(name, "^swarm\\..*")
 
 exporters:
   otlp/cribl:
@@ -65,9 +57,6 @@ exporters:
     tls:
       insecure:             false
       insecure_skip_verify: false
-    #   headers:
-    #     Authorization: "Bearer ${env:CRIBL_AUTH_TOKEN}"
-
   debug:
     verbosity: detailed
 
@@ -84,7 +73,7 @@ service:
       exporters: [otlp/cribl, debug]
     metrics:
       receivers: [otlp, prometheus]
-      processors: [memory_limiter, resource, batch]
+      processors: [memory_limiter, filter/drop_docker_runtime_metrics, resource, batch]
       exporters: [otlp/cribl, debug]
     logs:
       receivers: [otlp]

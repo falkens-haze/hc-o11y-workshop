@@ -4,22 +4,37 @@ set -euo pipefail
 readonly OTLP_PORT=4317
 readonly CONNECT_TIMEOUT=5
 
+CYAN=$'\033[96m'
+TEAL=$'\033[38;5;37m'
+MAGENTA=$'\033[95m'
+BOLD=$'\033[1m'
+YELLOW=$'\033[1;33m'
+RESET=$'\033[0m'
+
 echo ""
-echo "╔══════════════════════════════════════════════════╗"
-echo "║            Cribl / Honeycomb Workshop            ║"
-echo "║                 Telemetry Stack                  ║"
-echo "║                   May 20, 2026                   ║"
-echo "╚══════════════════════════════════════════════════╝"
+echo "${CYAN}╔════════════════════════════════════════════════════════════════════════════════╗${RESET}"
+echo "${CYAN}║${RESET}${BOLD}                           Cribl / Honeycomb Workshop                           ${RESET}${CYAN}║${RESET}"
+echo "${CYAN}║${RESET}${BOLD}                                Telemetry Stack                                 ${RESET}${CYAN}║${RESET}"
+echo "${CYAN}║${RESET}${BOLD}                                  May 20, 2026                                  ${RESET}${CYAN}║${RESET}"
+echo "${CYAN}╚════════════════════════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
-echo "Services that will start:"
-echo "  otel-collector              — receives all signals, forwards to Cribl"
-echo "  telemetrygen-traces-*       — synthetic traces (frontend, checkout, payment)"
-echo "  workshop-logs               — realistic logs with PII, LLM ops, HTTP events"
-echo "  genaitelgen                 — synthetic GenAI/LLM spans"
+echo "${TEAL}  Questions or issues? Contact gcoleman@cribl.io or Slack community @greg${RESET}"
+echo ""
+echo "${MAGENTA}╔════════════════════════════════════════════════════════════════════════════════╗${RESET}"
+echo "${MAGENTA}║${RESET}${BOLD}  Services that will start:                                                     ${RESET}${MAGENTA}║${RESET}"
+echo "${MAGENTA}║${RESET}                                                                                ${MAGENTA}║${RESET}"
+echo "${MAGENTA}║${RESET}  otel-collector              — receives all signals, forwards to Cribl       ${MAGENTA}║${RESET}"
+echo "${MAGENTA}║${RESET}  node-exporter               — host OS metrics (CPU, memory, disk, net)      ${MAGENTA}║${RESET}"
+echo "${MAGENTA}║${RESET}  telemetrygen-traces-*        — synthetic traces (frontend, checkout,         ${MAGENTA}║${RESET}"
+echo "${MAGENTA}║${RESET}                                 payment)                                      ${MAGENTA}║${RESET}"
+echo "${MAGENTA}║${RESET}  workshop-logs               — realistic logs with PII, LLM ops, HTTP        ${MAGENTA}║${RESET}"
+echo "${MAGENTA}║${RESET}  genaitelgen                 — synthetic GenAI/LLM spans                     ${MAGENTA}║${RESET}"
+echo "${MAGENTA}║${RESET}                                                                                ${MAGENTA}║${RESET}"
+echo "${MAGENTA}╚════════════════════════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo "Find your Cribl.Cloud ingest hostname in the portal:"
 echo "  Workspace → Access → Public Ingress"
-echo "  Docs: https://docs.cribl.io/stream/usecase-syslog-cloud#determine-your-criblcloud-ingest-address"
+echo "  ${YELLOW}Docs: https://docs.cribl.io/stream/usecase-syslog-cloud#determine-your-criblcloud-ingest-address${RESET}"
 echo ""
 echo "Example: default.main.<organizationId>.cribl.cloud"
 echo ""
