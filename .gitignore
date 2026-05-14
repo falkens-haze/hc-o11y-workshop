@@ -1,6 +1,7 @@
 .env
 .DS_Store
 *.OLD
+lookups/
 *.swp
 *.swo
 *~

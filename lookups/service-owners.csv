@@ -1,9 +1,0 @@
-# service.name → ownership / business context for the workshop services.
-# Used in Section 4 of the workshop to demo Cribl Lookup enrichment.
-service.name,team,business_unit,oncall_pager,criticality
-workshop-frontend,storefront,commerce,pd-storefront,tier-1
-workshop-checkout,checkout,commerce,pd-checkout,tier-1
-workshop-payment,payments,finance,pd-payments,tier-0
-workshop-ai-assistant,ai-platform,r-and-d,pd-ai,tier-2
-workshop-logging-service,platform,infrastructure,pd-platform,tier-2
-node-exporter,platform,infrastructure,pd-platform,tier-3
