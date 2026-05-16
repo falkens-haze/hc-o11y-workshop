@@ -20,16 +20,23 @@ echo "${CYAN}╚═════════════════════�
 echo ""
 echo "${TEAL}  Questions or issues? Contact gcoleman@cribl.io or Slack community @greg${RESET}"
 echo ""
+mbox() {
+  local content="$1"
+  local dlen pad
+  dlen=$(printf '%s' "$content" | wc -m | tr -d ' ')
+  pad=$(( 80 - dlen ))
+  printf "${MAGENTA}║${RESET}%s%${pad}s${MAGENTA}║${RESET}\n" "$content" ""
+}
 echo "${MAGENTA}╔════════════════════════════════════════════════════════════════════════════════╗${RESET}"
-echo "${MAGENTA}║${RESET}${BOLD}  Services that will start:                                                     ${RESET}${MAGENTA}║${RESET}"
-echo "${MAGENTA}║${RESET}                                                                                ${MAGENTA}║${RESET}"
-echo "${MAGENTA}║${RESET}  otel-collector              — receives all signals, forwards to Cribl       ${MAGENTA}║${RESET}"
-echo "${MAGENTA}║${RESET}  node-exporter               — host OS metrics (CPU, memory, disk, net)      ${MAGENTA}║${RESET}"
-echo "${MAGENTA}║${RESET}  telemetrygen-traces-*        — synthetic traces (frontend, checkout,         ${MAGENTA}║${RESET}"
-echo "${MAGENTA}║${RESET}                                 payment)                                      ${MAGENTA}║${RESET}"
-echo "${MAGENTA}║${RESET}  workshop-logs               — realistic logs with PII, LLM ops, HTTP        ${MAGENTA}║${RESET}"
-echo "${MAGENTA}║${RESET}  genaitelgen                 — synthetic GenAI/LLM spans                     ${MAGENTA}║${RESET}"
-echo "${MAGENTA}║${RESET}                                                                                ${MAGENTA}║${RESET}"
+mbox ""
+mbox "  Services that will start:"
+mbox ""
+mbox "  otel-collector         — receives all signals, forwards to Cribl"
+mbox "  node-exporter          — host OS metrics (CPU, memory, disk, network)"
+mbox "  telemetrygen-traces-*  — synthetic traces (frontend, checkout, payment)"
+mbox "  workshop-logs          — logs with PII, LLM ops, HTTP events"
+mbox "  genaitelgen            — synthetic GenAI/LLM spans"
+mbox ""
 echo "${MAGENTA}╚════════════════════════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo "Find your Cribl.Cloud ingest hostname in the portal:"

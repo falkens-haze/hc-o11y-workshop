@@ -1,0 +1,39 @@
+{
+  "id": "honeycomb_all",
+  "conf": {
+    "output": "default",
+    "streamtags": [],
+    "groups": {},
+    "asyncFuncTimeout": 1000,
+    "functions": [
+      {
+        "id": "eval",
+        "filter": "true",
+        "conf": {
+          "printUndefineds": false,
+          "remove": [
+            "_raw"
+          ]
+        },
+        "disabled": false
+      },
+      {
+        "filter": "true",
+        "conf": {
+          "fields": [
+            "resource",
+            "attributes",
+            "scope",
+            "scope_span",
+            "status"
+          ],
+          "prefix": "",
+          "depth": 3,
+          "delimiter": "_"
+        },
+        "id": "flatten"
+      }
+    ],
+    "description": ""
+  }
+}
