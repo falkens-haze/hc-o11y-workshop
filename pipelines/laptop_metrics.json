@@ -1,0 +1,139 @@
+{
+  "id": "laptop_metrics",
+  "conf": {
+    "output": "default",
+    "streamtags": [],
+    "groups": {},
+    "asyncFuncTimeout": 1000,
+    "functions": [
+      {
+        "id": "clone",
+        "filter": "true",
+        "disabled": true,
+        "conf": {
+          "clones": [
+            {
+              "__cloned": "'true'"
+            }
+          ]
+        }
+      },
+      {
+        "conf": {},
+        "id": "drop",
+        "filter": "!_metric || _metric == '' || _metric.trim() == ''",
+        "disabled": false
+      },
+      {
+        "id": "eval",
+        "filter": "'true'",
+        "conf": {
+          "printUndefineds": false,
+          "add": [
+            {
+              "disabled": false,
+              "value": "_metric.startsWith('node_cpu') ? 'cpu' : _metric.startsWith('node_network') ? 'network' : _metric.startsWith('node_disk') ? 'disk' : _metric.startsWith('node_filesystem') ? 'filesystem' : _metric.startsWith('node_memory') ? 'memory' : _metric.startsWith('node_nfs') ? 'nfs' : _metric.startsWith('node_') ? 'node_other' : _metric.startsWith('go_') ? 'go_runtime' : _metric.startsWith('process_') ? 'process' : _metric.startsWith('scrape_') ? 'scrape_meta' : _metric.startsWith('kafka.') ? 'kafka' : _metric.startsWith('jvm.') ? 'jvm' : _metric.startsWith('http.') ? 'http' : _metric.startsWith('app.') ? 'application' : 'other'",
+              "name": "'metric_category'"
+            }
+          ]
+        }
+      },
+      {
+        "filter": "_metric && _metric.startsWith('node_')",
+        "conf": {
+          "timeWindow": "10s",
+          "dropDimensions": [
+            "device",
+            "address",
+            "broadcast"
+          ],
+          "flushOnInputClose": true
+        },
+        "id": "drop_dimensions",
+        "disabled": true,
+        "description": "WORKSHOP CARDINALITY DROP — strips 'device' and 'address' / 'broadcast' from node_exporter metrics. Attendees see this hit on their own laptop's data: node_disk_*, node_network_*, etc. collapse from 18-25 per-device series down to 1 aggregated series per metric. Cardinality drop ~80-90% on disk + network categories. Toggle ON during the lab demo."
+      },
+      {
+        "filter": "'true'",
+        "conf": {
+          "printUndefineds": false,
+          "add": [
+            {
+              "disabled": false,
+              "name": "'metric_category'",
+              "value": "_metric.startsWith('node_cpu') ? 'cpu' : _metric.startsWith('node_network') ? 'network' : _metric.startsWith('node_disk') ? 'disk' : _metric.startsWith('node_filesystem') ? 'filesystem' : _metric.startsWith('node_memory') ? 'memory' : _metric.startsWith('node_nfs') ? 'nfs' : _metric.startsWith('node_') ? 'node_other' : _metric.startsWith('go_') ? 'go_runtime' : _metric.startsWith('process_') ? 'process' : _metric.startsWith('scrape_') ? 'scrape_meta' : _metric.startsWith('kafka.') ? 'kafka' : _metric.startsWith('jvm.') ? 'jvm' : _metric.startsWith('http.') ? 'http' : _metric.startsWith('app.') ? 'application' : 'other'"
+            }
+          ]
+        },
+        "id": "eval",
+        "description": "Re-categorize after Drop Dimensions. The aggregation step strips top-level event fields (including metric_category) from the merged output events. We re-derive metric_category here from the preserved _metric so downstream dashboards using metric_category-based queries still work."
+      },
+      {
+        "id": "publish_metrics",
+        "filter": "__cloned=='true'",
+        "conf": {
+          "overwrite": false,
+          "dimensions": [
+            "!_*",
+            "*",
+            "metric_category"
+          ],
+          "removeMetrics": [],
+          "removeDimensions": []
+        }
+      },
+      {
+        "id": "eval",
+        "filter": "__cloned=='true'",
+        "disabled": true,
+        "conf": {
+          "printUndefineds": false,
+          "add": [
+            {
+              "disabled": false,
+              "name": "'_dd_original'",
+              "value": "_metric"
+            },
+            {
+              "disabled": false,
+              "name": "'_metric'",
+              "value": "_metric.replace(/\\.count$/, '_count_total').replace(/\\./g, '_').replace(/-/g, '_').replace(/__+/g, '_')"
+            }
+          ]
+        }
+      },
+      {
+        "id": "code",
+        "filter": "true",
+        "disabled": true,
+        "conf": {
+          "maxNumOfIterations": 5000,
+          "activeLogSampleRate": 1,
+          "useUniqueLogChannel": true,
+          "code": "__dimensions = __dimensions || {};\n\nif (tags && Array.isArray(tags)) {\n  tags.forEach(tag => {\n    const parts = tag.split(':');\n    if (parts.length === 2) {\n      const key = parts[0].replace(/[^a-zA-Z0-9_]/g, '_');\n      __dimensions[key] = parts[1];\n    }\n  });\n}"
+        }
+      },
+      {
+        "id": "eval",
+        "filter": "__cloned=='true'",
+        "disabled": true,
+        "conf": {
+          "printUndefineds": false,
+          "add": [
+            {
+              "disabled": false,
+              "name": "source",
+              "value": "'datadog'"
+            },
+            {
+              "disabled": false,
+              "name": "collection_method",
+              "value": "'datadog_agent'"
+            }
+          ]
+        }
+      }
+    ],
+    "description": ""
+  }
+}

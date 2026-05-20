@@ -1,0 +1,59 @@
+{
+  "id": "traces_sampler",
+  "conf": {
+    "output": "default",
+    "streamtags": [],
+    "groups": {},
+    "asyncFuncTimeout": 1000,
+    "functions": [
+      {
+        "filter": "true",
+        "conf": {
+          "printUndefineds": false,
+          "add": [
+            {
+              "disabled": false,
+              "name": "'duration_ms'",
+              "value": "(Number(end_time_unix_nano || 0) - Number(start_time_unix_nano || 0)) / 1000000"
+            },
+            {
+              "disabled": false,
+              "name": "'is_error'",
+              "value": "(status && status.code === 2) || (attributes && Number(attributes['http.status_code']) >= 500) || (attributes && attributes['rpc.grpc.status_code'] && Number(attributes['rpc.grpc.status_code']) !== 0)"
+            },
+            {
+              "disabled": false,
+              "name": "'is_slow'",
+              "value": "duration_ms > 1000"
+            },
+            {
+              "disabled": false,
+              "name": "'service_name'",
+              "value": "resource.attributes['service.name'] || 'unknown'"
+            },
+            {
+              "disabled": false,
+              "name": "'trace_bucket'",
+              "value": "parseInt(trace_id.substring(30, 32), 16)"
+            },
+            {
+              "disabled": false,
+              "name": "'keep_reason'",
+              "value": "is_error ? 'error' : is_slow ? 'slow' : trace_bucket < 26 ? 'sampled_10pct' : 'drop'"
+            }
+          ]
+        },
+        "id": "eval",
+        "description": "Stage 1 — enrich every span with sampling-decision metadata. duration_ms from start/end nanos. is_error: OTel status.code=2 OR HTTP 5xx OR non-zero gRPC. is_slow: duration > 1000ms. service_name: extracted from resource.attributes['service.name']. trace_bucket: parseInt of the last 2 hex chars of trace_id (uses substring(30,32) to avoid the negative-index slice issue that Cribl rejects silently). keep_reason: errors and slow always kept; ~10% deterministic baseline kept (26/256 of trace_bucket values); everything else dropped."
+      },
+      {
+        "conf": {},
+        "id": "drop",
+        "filter": "keep_reason === 'drop'",
+        "disabled": true,
+        "description": "SAMPLING TOGGLE — drops spans whose keep_reason is 'drop'. Errors, slow traces (>1000ms), and ~10% deterministic baseline (trace_bucket < 26 out of 0-255) are kept. Deterministic per trace_id, so all spans of the same trace share the same fate — no partial traces in Honeycomb. Disabled by default for safety. Lake retention unaffected — the route to Lake forks before this pipeline runs."
+      }
+    ],
+    "description": "Trace pre-filtering for cost control. Two functions: Eval (enrich every span with is_error / is_slow / trace_bucket / keep_reason) and Drop (toggle to actually drop). Complements Refinery downstream; Lake retains 100% via separate route. Simplified version without CMDB lookup — pure deterministic sampling. In production, layer in a Lookup function before this Eval to enrich with criticality_tier, slo_target_ms, oncall_team, biz_unit etc. for tier-aware decisions."
+  }
+}
